@@ -1,6 +1,6 @@
 # Persona Writer Studio
 
-> AI 작가 페르소나 기반 창작 지원 스튜디오 — llama.cpp / vLLM / Gemini 멀티 백엔드 지원
+> AI 작가 페르소나 기반 창작 지원 스튜디오 —
 
 **Persona Writer Studio**는 소설가, 영화 시나리오, 게임 시나리오, 광고 카피 등 다양한 작가 페르소나와 LoRA 어댑터를 결합한 전문 창작 AI 스튜디오입니다. 창작 맥락을 유지하면서 여러 페르소나를 자유롭게 전환하며 원고를 작성하고 아카이브할 수 있습니다.
 
@@ -10,23 +10,22 @@
 
 | 기능 | 설명 |
 |------|------|
-| **멀티 페르소나** | 소설가, 영화 시나리오, 게임 시나리오(50/500 체크포인트), 광고 카피 6종 기본 제공 |
+| **멀티 페르소나** | 소설가, 영화 시나리오, 게임 시나리오, 광고 카피 |
 | **LoRA 런타임 전환** | llama.cpp의 `/lora-adapters` API로 요청마다 페르소나별 어댑터 자동 적용 |
 | **게임 시나리오 플로우** | 장르·세계관·주인공·분기 그래프까지 단계별 인터랙티브 시나리오 설계 |
 | **원고 아카이브** | 생성 원고를 저장·조회·편집, JSON 내보내기 지원 |
 | **스타일 비교 뷰** | 동일 프롬프트를 여러 페르소나로 동시 생성·비교 |
 | **품질 자동 수정** | 외래 문자(키릴, 한자 등) 감지 시 자동 재생성 파이프라인 |
-| **멀티 백엔드** | `llamacpp` · `vllm` · `gemini` 세 가지 모델 백엔드 지원 |
 
 ---
 
 ## 기술 스택
 
-- **Frontend**: Next.js 15 (App Router, Turbopack), React 19, Tailwind CSS v4
+- **Frontend**: Next.js 15 (App Router, Turbopack), Tailwind CSS v4
 - **Animation**: Motion (Framer Motion v12)
 - **Icons**: Lucide React
 - **Backend**: Next.js API Routes (`/api/generate-manuscript`, `/api/manuscripts`)
-- **AI 백엔드**: llama.cpp server / vLLM / Google Gemini API
+- **AI 백엔드**: llama.cpp server
 
 ---
 
@@ -54,7 +53,7 @@ cp .env.example .env
 `.env`를 열고 사용 환경에 맞게 수정합니다.
 
 ```env
-# 사용할 모델 백엔드 선택: llamacpp | vllm | gemini
+
 MODEL_PROVIDER="llamacpp"
 
 # llama.cpp 서버 (SSH 터널 예시)
@@ -68,8 +67,6 @@ LLAMACPP_LORA_GAME_ID="1"
 LLAMACPP_LORA_MOVIE_ID="3"
 LLAMACPP_LORA_NOVEL_ID="2"
 
-# Gemini (fallback 또는 MODEL_PROVIDER="gemini" 시)
-GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
 ```
 
 전체 환경변수 목록은 [`.env.example`](.env.example)을 참고하세요.
@@ -108,19 +105,6 @@ ssh -p <PORT> -L 8088:127.0.0.1:8088 root@<GPU_SERVER_IP>
 
 ---
 
-## vLLM 서버 설정 가이드
-
-```bash
-vllm serve Qwen/Qwen3-8B \
-  --host 127.0.0.1 \
-  --port 8000 \
-  --enable-lora \
-  --lora-modules qwen3-8b-game-lora=/path/to/adapter
-```
-
-`.env`에서 `MODEL_PROVIDER="vllm"` 및 `VLLM_BASE_URL`을 설정합니다.
-
----
 
 ## 프로젝트 구조
 
@@ -128,7 +112,7 @@ vllm serve Qwen/Qwen3-8B \
 Persona-Writer-Studio/
 ├── app/
 │   ├── api/
-│   │   ├── generate-manuscript/   # 원고 생성 API (llamacpp / vllm / gemini 분기)
+│   │   ├── generate-manuscript/   # 원고 생성 API (llamacpp)
 │   │   └── manuscripts/           # 원고 CRUD API
 │   ├── login/                     # 로그인 페이지
 │   ├── globals.css                # 디자인 토큰 (다크 에디토리얼 테마)
