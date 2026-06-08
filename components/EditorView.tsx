@@ -454,7 +454,7 @@ export default function EditorView({
                 onKeyDown={handleKeyDown}
                 rows={1}
                 className="flex-1 bg-transparent text-on-surface text-sm leading-relaxed resize-none focus:outline-none placeholder-muted-text font-sans"
-                placeholder={`${currentPersona.name}에게 창작을 요청하세요...`}
+                placeholder={currentPersona.id === 'novel' ? `소재와 분위기를 함께 입력해 주세요.\n예) 비 오는 늦은 밤, 혼자 편의점에 들른 직장인 / 잔잔하고 서정적인 분위기` : `${currentPersona.name}에게 창작을 요청하세요...`}
                 disabled={isGenerating}
               />
               <div className="flex items-center gap-2 flex-shrink-0">
