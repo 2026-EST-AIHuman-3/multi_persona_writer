@@ -48,11 +48,29 @@ export default function Home() {
     {
       id: "game",
       name: "게임 시나리오",
-      loraAdapter: "LoRA: RPG_Quest_Gen",
+      loraAdapter: "LoRA: Qwen3_Game_500_Final",
       icon: "game",
       description: "퀘스트 대화 트리, 분기 스크립트, 게임 세계관 NPC 및 상호작용 문답 구조에 최적화된 게이밍 라이터 페르소나입니다.",
       recommendedTasks: ["NPC 선택지 대사", "퀘스트 설명 스크립트", "게임 시스템 로그 풍 기사"],
-      defaultConfig: { temperature: 0.75, topP: 0.9, presencePenalty: 0.25 }
+      defaultConfig: { temperature: 0.5, topP: 0.8, presencePenalty: 0.65 }
+    },
+    {
+      id: "game-50",
+      name: "게임 시나리오 50",
+      loraAdapter: "LoRA: Qwen3_Game_Checkpoint_50",
+      icon: "game",
+      description: "50 스텝 체크포인트 LoRA를 테스트하기 위한 게임 시나리오 페르소나입니다.",
+      recommendedTasks: ["50 체크포인트 응답 비교", "게임 시나리오 진행 테스트", "한국어 안정성 확인"],
+      defaultConfig: { temperature: 0.5, topP: 0.8, presencePenalty: 0.65 }
+    },
+    {
+      id: "game-500",
+      name: "게임 시나리오 500",
+      loraAdapter: "LoRA: Qwen3_Game_500_Final",
+      icon: "game",
+      description: "500개 데이터 기반 최종 LoRA를 테스트하기 위한 게임 시나리오 페르소나입니다.",
+      recommendedTasks: ["최종 LoRA 응답 비교", "게임 시나리오 진행 테스트", "반복/깨짐 확인"],
+      defaultConfig: { temperature: 0.5, topP: 0.8, presencePenalty: 0.65 }
     },
     {
       id: "ad",
@@ -210,7 +228,6 @@ export default function Home() {
         {currentTab === 'landing' ? (
           <LandingView 
             onStartWriting={handleNewDraft}
-            onExplorePersonas={() => setCurrentTab('comparison')}
           />
         ) : currentTab === 'archive' ? (
           <ArchiveView 

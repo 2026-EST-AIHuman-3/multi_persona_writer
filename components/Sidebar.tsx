@@ -3,17 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BookOpen, Gamepad2, Film, Megaphone, Plus, HelpCircle, Settings } from "lucide-react";
+import { BookOpen, Gamepad2, Film, Megaphone, HelpCircle, Settings } from "lucide-react";
 import { Persona } from "@/types";
 
 interface SidebarProps {
   personas: Persona[];
   activePersonaId: string;
   onSelectPersona: (id: string) => void;
-  onOpenCreateModal?: () => void;
 }
 
-export default function Sidebar({ personas, activePersonaId, onSelectPersona, onOpenCreateModal }: SidebarProps) {
+export default function Sidebar({ personas, activePersonaId, onSelectPersona }: SidebarProps) {
   // Map icon strings to Lucide components
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -67,13 +66,6 @@ export default function Sidebar({ personas, activePersonaId, onSelectPersona, on
 
       {/* Footer Nav inside sidebar */}
       <div className="mt-auto flex flex-col gap-4">
-        <button 
-          onClick={onOpenCreateModal}
-          className="w-full border border-primary text-primary hover:bg-primary hover:text-on-primary transition-all duration-200 ease-in-out py-2.5 rounded-none font-bold text-[10px] tracking-[0.2em] uppercase flex justify-center items-center gap-2 cursor-pointer bg-transparent"
-        >
-          <Plus size={12} />
-          <span>페르소나 만들기</span>
-        </button>
 
         <div className="border-t border-border-warm pt-4 flex flex-col gap-0.5">
           <a className="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary transition-all rounded text-[10px] font-bold tracking-widest uppercase" href="#help">

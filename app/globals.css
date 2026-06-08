@@ -1,4 +1,9 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+
+@source "../app";
+@source "../components";
+@source "../lib";
+@source "../types";
 
 @theme {
   /* Fonts Pairing Strategy */

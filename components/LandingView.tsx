@@ -8,14 +8,13 @@ import { motion } from "motion/react";
 
 interface LandingViewProps {
   onStartWriting: () => void;
-  onExplorePersonas: () => void;
 }
 
-export default function LandingView({ onStartWriting, onExplorePersonas }: LandingViewProps) {
+export default function LandingView({ onStartWriting }: LandingViewProps) {
   return (
     <div className="flex-grow pt-24 px-margin-page w-full max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-12 items-center justify-center min-h-[calc(100vh-80px)]">
       {/* Hero Text */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
@@ -25,29 +24,23 @@ export default function LandingView({ onStartWriting, onExplorePersonas }: Landi
           AI-Powered Persona Studio
         </span>
         <h1 className="font-serif text-5xl md:text-6xl text-ink max-w-[650px] leading-[1.15] font-normal italic break-keep">
-          당신의 창작을 완성할<br />완벽한 <span className="font-serif italic font-semibold border-b border-secondary pb-1">AI 페르소나</span>
+          비어 있는 빈칸을 <br />영감으로 채우는,<br />Your <span className="font-serif italic font-semibold border-b border-secondary pb-1">AI Partner</span>
         </h1>
         <p className="font-sans text-body-md text-on-surface-variant max-w-[500px] font-light break-keep leading-relaxed tracking-wide opacity-90">
           전문적인 시나리오 작가 페르소나와 정교한 LoRA 어댑터 기술이 만난 전용 에디토리얼 스튜디오 환경입니다. 창작의 맥락을 완벽히 보존하면서 다양한 작가 페르소나를 자유롭게 오가며 영감을 채우세요.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
-          <button 
+          <button
             onClick={onStartWriting}
             className="border border-primary text-primary hover:bg-primary hover:text-on-primary text-xs font-bold tracking-[0.2em] uppercase px-8 py-4 transition-all cursor-pointer bg-transparent"
           >
             집필 시작하기
           </button>
-          <button 
-            onClick={onExplorePersonas}
-            className="border border-outline text-on-surface-variant hover:border-primary hover:text-primary text-xs font-bold tracking-[0.2em] uppercase px-8 py-4 transition-all cursor-pointer bg-transparent"
-          >
-            페르소나 리스트
-          </button>
         </div>
       </motion.div>
 
       {/* Visual Composition */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.1 }}
@@ -84,7 +77,7 @@ export default function LandingView({ onStartWriting, onExplorePersonas }: Landi
         </div>
 
         {/* Floating Persona Cards */}
-        <motion.div 
+        <motion.div
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className="absolute z-30 top-12 left-2 bg-surface-warm border border-primary p-3.5 shadow-xl transform -rotate-2 w-48"
@@ -98,7 +91,7 @@ export default function LandingView({ onStartWriting, onExplorePersonas }: Landi
           </div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           animate={{ y: [0, 4, 0] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           className="absolute z-10 bottom-16 right-4 bg-surface-warm border border-border-warm p-3.5 shadow-lg transform rotate-3 w-48 opacity-80 hover:opacity-100 transition-opacity"
@@ -113,7 +106,7 @@ export default function LandingView({ onStartWriting, onExplorePersonas }: Landi
         </motion.div>
 
         {/* Evaluation Match Meter Float */}
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}

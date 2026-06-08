@@ -4,8 +4,25 @@
  */
 
 import { useState, useEffect, useRef, useCallback, KeyboardEvent } from "react";
-import { RefreshCw, Save, Sliders, CheckCircle2, Send, Bot, UserCircle, Copy, Check } from "lucide-react";
+import { RefreshCw, Save, Sliders, CheckCircle2, Send, Bot, UserCircle, Copy, Check, Download, RotateCcw } from "lucide-react";
 import { Manuscript, Persona } from "@/types";
+import { createScenarioExport, downloadScenarioExport } from "@/lib/scenario/exporter";
+import { buildBranchGraphMessage } from "@/lib/scenario/branch-graph";
+import { normalizeScenarioControlChoices } from "@/lib/scenario/control-options";
+import { detectQualityWarnings } from "@/lib/scenario/quality-check";
+import { buildScenarioSystemPrompt, buildScenarioUserPrompt } from "@/lib/scenario/prompt-builder";
+import {
+  advanceScenarioState,
+  loadScenarioState,
+  resetScenarioState,
+  saveScenarioState,
+} from "@/lib/scenario/state-manager";
+import {
+  handleScenarioSelectionTurn,
+  isScenarioSelectionStage,
+  isScenarioStartInput,
+} from "@/lib/scenario/selection-flow";
+import { ScenarioState } from "@/lib/scenario/types";
 
 interface ChatMessage {
   id: string;
@@ -40,9 +57,11 @@ export default function EditorView({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [scenarioState, setScenarioState] = useState<ScenarioState>(() => loadScenarioState());
 
   // Derive current messages from sessionsMap
   const messages = sessionsMap[activePersonaId] || [];
+  const isScenarioPersona = activePersonaId === "game" || activePersonaId.startsWith("game-");
 
   // Helper to update messages for a specific persona
   const updateMessages = useCallback((personaId: string, updater: (prev: ChatMessage[]) => ChatMessage[]) => {
@@ -57,14 +76,18 @@ export default function EditorView({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // LoRA Parameter Sliders
-  const [temperature, setTemperature] = useState(0.65);
-  const [topP, setTopP] = useState(0.9);
-  const [presencePenalty, setPresencePenalty] = useState(0.4);
+  const [temperature, setTemperature] = useState(0.5);
+  const [topP, setTopP] = useState(0.8);
+  const [presencePenalty, setPresencePenalty] = useState(0.65);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    saveScenarioState(scenarioState);
+  }, [scenarioState]);
 
   // Load selected manuscript as a conversation if provided
   useEffect(() => {
@@ -122,6 +145,47 @@ export default function EditorView({
 
     updateMessages(activePersonaId, prev => [...prev, userMessage]);
     setInputValue("");
+
+    if (isScenarioPersona && isScenarioStartInput(trimmed)) {
+      const baseState = resetScenarioState();
+      const result = handleScenarioSelectionTurn(baseState, trimmed);
+      setScenarioState(result.state);
+      const aiMessage: ChatMessage = {
+        id: `scenario-start-${Date.now()}`,
+        role: "assistant",
+        content: result.message,
+        timestamp: new Date(),
+      };
+      updateMessages(activePersonaId, () => [userMessage, aiMessage]);
+      return;
+    }
+
+    if (isScenarioPersona && isScenarioSelectionStage(scenarioState.stage)) {
+      const result = handleScenarioSelectionTurn(scenarioState, trimmed);
+      setScenarioState(result.state);
+      const aiMessage: ChatMessage = {
+        id: `scenario-selection-${Date.now()}`,
+        role: "assistant",
+        content: result.message,
+        timestamp: new Date(),
+      };
+      updateMessages(activePersonaId, prev => [...prev, aiMessage]);
+      return;
+    }
+
+    if (isScenarioPersona && scenarioState.stage === "BRANCH_GRAPH_DESIGN") {
+      const generated = buildBranchGraphMessage(scenarioState);
+      setScenarioState(advanceScenarioState(scenarioState, trimmed, generated));
+      const aiMessage: ChatMessage = {
+        id: `scenario-branch-${Date.now()}`,
+        role: "assistant",
+        content: generated,
+        timestamp: new Date(),
+      };
+      updateMessages(activePersonaId, prev => [...prev, aiMessage]);
+      return;
+    }
+
     setIsGenerating(true);
 
     // Auto-resize textarea back
@@ -130,14 +194,36 @@ export default function EditorView({
     }
 
     try {
-      const generated = await onGenerate(trimmed, {
+      const requestPrompt = isScenarioPersona
+        ? buildScenarioUserPrompt(scenarioState, trimmed)
+        : trimmed;
+      const systemPrompt = isScenarioPersona
+        ? buildScenarioSystemPrompt(scenarioState)
+        : undefined;
+
+      const rawGenerated = await onGenerate(requestPrompt, {
         personaName: currentPersona.name,
         personaDesc: currentPersona.description,
         loraAdapter: currentPersona.loraAdapter,
         temperature,
         topP,
-        presencePenalty
+        presencePenalty,
+        systemPrompt,
       });
+      const generated = isScenarioPersona
+        ? normalizeScenarioControlChoices(rawGenerated, scenarioState)
+        : rawGenerated;
+
+      if (isScenarioPersona) {
+        const warnings = detectQualityWarnings(generated);
+        setScenarioState(prev => {
+          const advanced = advanceScenarioState(prev, trimmed, generated);
+          return {
+            ...advanced,
+            warnings,
+          };
+        });
+      }
 
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -206,6 +292,23 @@ export default function EditorView({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleExportScenario = () => {
+    const payload = createScenarioExport(
+      scenarioState,
+      messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      }))
+    );
+    downloadScenarioExport(payload);
+  };
+
+  const handleResetScenario = () => {
+    const next = resetScenarioState();
+    setScenarioState(next);
+    updateMessages("game", () => []);
   };
 
   // Word count from all AI messages
@@ -390,14 +493,34 @@ export default function EditorView({
         {/* Adapter Status */}
         <div className="p-6 border-b border-border-warm/40 bg-[#0A0A0A]">
           <h3 className="font-mono text-[9px] tracking-[0.3em] text-secondary uppercase mb-2 font-bold">
-            STYLE CONFIG : ACTIVE
+            {isScenarioPersona ? "SCENARIO STATE : ACTIVE" : "STYLE CONFIG : ACTIVE"}
           </h3>
           <p className="font-serif text-lg text-ink font-normal italic tracking-tight">
-            {currentPersona.loraAdapter}
+            {isScenarioPersona ? scenarioState.stage : currentPersona.loraAdapter}
           </p>
           <p className="font-sans text-[10px] tracking-wide text-on-surface-variant mt-1.5 opacity-80">
-            페르소나: {currentPersona.name}
+            {isScenarioPersona
+              ? `챕터 ${scenarioState.currentChapter}${scenarioState.currentNodeId ? ` · ${scenarioState.currentNodeId}` : ""}`
+              : `페르소나: ${currentPersona.name}`}
           </p>
+          {isScenarioPersona && (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={handleExportScenario}
+                className="flex items-center gap-1.5 border border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors px-3 py-2 text-[9px] font-mono uppercase tracking-wider bg-transparent"
+              >
+                <Download size={11} />
+                JSON
+              </button>
+              <button
+                onClick={handleResetScenario}
+                className="flex items-center gap-1.5 border border-border-warm text-muted-text hover:text-primary hover:border-primary transition-colors px-3 py-2 text-[9px] font-mono uppercase tracking-wider bg-transparent"
+              >
+                <RotateCcw size={11} />
+                Reset
+              </button>
+            </div>
+          )}
         </div>
 
         {/* LoRA Parameters Controller */}
@@ -451,6 +574,26 @@ export default function EditorView({
 
         {/* Session Stats */}
         <div className="p-6 mt-auto border-t border-border-warm/40 bg-[#0A0A0A]">
+          {isScenarioPersona && (
+            <div className="mb-5 pb-5 border-b border-border-warm/40">
+              <div className="text-[9px] font-mono tracking-[0.3em] text-on-surface-variant uppercase mb-3 font-bold">
+                CONFIRMED
+              </div>
+              <div className="space-y-2 text-[10px] leading-relaxed text-on-surface-variant">
+                <p>장르: {scenarioState.confirmed.genre || "미정"}</p>
+                <p>규칙: {scenarioState.confirmed.worldRule || "미정"}</p>
+                <p>주인공: {scenarioState.confirmed.protagonist || "미정"}</p>
+                <p>적대 세력: {scenarioState.confirmed.antagonist || "미정"}</p>
+              </div>
+              {scenarioState.warnings.length > 0 && (
+                <div className="mt-4 text-[10px] leading-relaxed text-warning">
+                  {scenarioState.warnings.map((warning) => (
+                    <p key={warning}>- {warning}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex justify-between text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">
             <span>MESSAGES</span>
             <span className="font-bold text-white">{messages.length}</span>
