@@ -36,7 +36,7 @@ interface EditorViewProps {
   personas: Persona[];
   activePersonaId: string;
   onSave: (m: Partial<Manuscript>) => Promise<any>;
-  onGenerate: (prompt: string, config: any) => Promise<string>;
+  onGenerate: (prompt: string, config: any, onChunk?: (chunk: string) => void) => Promise<string>;
 }
 
 export default function EditorView({
@@ -57,6 +57,8 @@ export default function EditorView({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // 스트리밍 중 점진적으로 쌓이는 텍스트
+  const [streamingContent, setStreamingContent] = useState<string>("");
   const [scenarioState, setScenarioState] = useState<ScenarioState>(() => loadScenarioState());
 
   // Derive current messages from sessionsMap
@@ -187,6 +189,7 @@ export default function EditorView({
     }
 
     setIsGenerating(true);
+    setStreamingContent("");
 
     // Auto-resize textarea back
     if (inputRef.current) {
@@ -201,15 +204,22 @@ export default function EditorView({
         ? buildScenarioSystemPrompt(scenarioState)
         : undefined;
 
-      const rawGenerated = await onGenerate(requestPrompt, {
-        personaName: currentPersona.name,
-        personaDesc: currentPersona.description,
-        loraAdapter: currentPersona.loraAdapter,
-        temperature,
-        topP,
-        presencePenalty,
-        systemPrompt,
-      });
+      // 스트리밍 콜백: 각 청크를 받아 streamingContent에 누적
+      const rawGenerated = await onGenerate(
+        requestPrompt,
+        {
+          personaName: currentPersona.name,
+          personaDesc: currentPersona.description,
+          loraAdapter: currentPersona.loraAdapter,
+          temperature,
+          topP,
+          presencePenalty,
+          systemPrompt,
+        },
+        (chunk: string) => {
+          setStreamingContent(prev => prev + chunk);
+        }
+      );
       const generated = isScenarioPersona
         ? normalizeScenarioControlChoices(rawGenerated, scenarioState)
         : rawGenerated;
@@ -225,6 +235,8 @@ export default function EditorView({
         });
       }
 
+      // 스트리밍 완료 → 확정 메시지로 전환
+      setStreamingContent("");
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
@@ -234,6 +246,7 @@ export default function EditorView({
       updateMessages(activePersonaId, prev => [...prev, aiMessage]);
     } catch (e) {
       console.error(e);
+      setStreamingContent("");
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         role: 'assistant',
@@ -318,10 +331,10 @@ export default function EditorView({
 
   return (
     <div className="flex-1 ml-0 md:ml-sidebar-width flex overflow-hidden">
-      
+
       {/* Center Column: Chat Interface */}
       <div className="flex-1 bg-bg-warm flex flex-col h-[calc(100vh-64px)]">
-        
+
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-[760px] mx-auto px-6 py-8 flex flex-col gap-1">
@@ -359,9 +372,8 @@ export default function EditorView({
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex gap-3 py-5 ${
-                  msg.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
+                className={`flex gap-3 py-5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
               >
                 {/* AI avatar */}
                 {msg.role === 'assistant' && (
@@ -371,25 +383,22 @@ export default function EditorView({
                 )}
 
                 <div
-                  className={`relative group max-w-[85%] ${
-                    msg.role === 'user'
-                      ? 'bg-[#1E1E1E] border border-border-warm px-4 py-3'
-                      : 'px-1 py-1'
-                  }`}
+                  className={`relative group max-w-[85%] ${msg.role === 'user'
+                    ? 'bg-[#1E1E1E] border border-border-warm px-4 py-3'
+                    : 'px-1 py-1'
+                    }`}
                 >
                   {/* Role label */}
-                  <p className={`font-mono text-[9px] tracking-[0.3em] uppercase font-bold mb-2 ${
-                    msg.role === 'user' ? 'text-muted-text' : 'text-secondary'
-                  }`}>
+                  <p className={`font-mono text-[9px] tracking-[0.3em] uppercase font-bold mb-2 ${msg.role === 'user' ? 'text-muted-text' : 'text-secondary'
+                    }`}>
                     {msg.role === 'user' ? 'YOU' : currentPersona.name}
                   </p>
 
                   {/* Message content */}
-                  <div className={`text-on-surface leading-relaxed whitespace-pre-wrap ${
-                    msg.role === 'user'
-                      ? 'text-xs font-sans'
-                      : 'text-sm font-serif tracking-wide leading-loose'
-                  }`}>
+                  <div className={`text-on-surface leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
+                    ? 'text-xs font-sans'
+                    : 'text-sm font-serif tracking-wide leading-loose'
+                    }`}>
                     {msg.content}
                   </div>
 
@@ -419,22 +428,29 @@ export default function EditorView({
               </div>
             ))}
 
-            {/* Generating indicator */}
+            {/* Streaming indicator - 스트리밍 중 실시간 텍스트 표시 */}
             {isGenerating && (
               <div className="flex gap-3 py-5">
                 <div className="flex-shrink-0 w-7 h-7 border border-border-warm flex items-center justify-center mt-0.5">
                   <Bot size={14} className="text-secondary" />
                 </div>
-                <div className="px-1 py-1">
+                <div className="px-1 py-1 max-w-[85%]">
                   <p className="font-mono text-[9px] tracking-[0.3em] uppercase font-bold mb-2 text-secondary">
                     {currentPersona.name}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <RefreshCw size={14} className="text-secondary animate-spin" />
-                    <span className="text-xs text-muted-text font-mono tracking-wider">
-                      집필 중...
-                    </span>
-                  </div>
+                  {streamingContent ? (
+                    <div className="text-on-surface text-sm font-serif tracking-wide leading-loose whitespace-pre-wrap">
+                      {streamingContent}
+                      <span className="inline-block w-0.5 h-4 bg-secondary ml-0.5 animate-pulse align-middle" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <RefreshCw size={14} className="text-secondary animate-spin" />
+                      <span className="text-xs text-muted-text font-mono tracking-wider">
+                        집필 중...
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -454,7 +470,7 @@ export default function EditorView({
                 onKeyDown={handleKeyDown}
                 rows={1}
                 className="flex-1 bg-transparent text-on-surface text-sm leading-relaxed resize-none focus:outline-none placeholder-muted-text font-sans"
-                placeholder={currentPersona.id === 'novel' ? `소재와 분위기를 함께 입력해 주세요.\n예) 비 오는 늦은 밤, 혼자 편의점에 들른 직장인 / 잔잔하고 서정적인 분위기` : `${currentPersona.name}에게 창작을 요청하세요...`}
+                placeholder={currentPersona.id === 'novel' ? `소재와 분위기를 함께 입력해 주세요. 예시:눈사람을 소재로 따뜻하고 잔잔한 분위기의 장면을 써줘` : `${currentPersona.name}에게 창작을 요청하세요...`}
                 disabled={isGenerating}
               />
               <div className="flex items-center gap-2 flex-shrink-0">
@@ -471,11 +487,10 @@ export default function EditorView({
                 <button
                   disabled={isGenerating || !inputValue.trim()}
                   onClick={handleSend}
-                  className={`flex items-center justify-center w-8 h-8 transition-all cursor-pointer ${
-                    inputValue.trim() && !isGenerating
-                      ? 'bg-primary text-on-primary hover:opacity-90'
-                      : 'bg-[#252525] text-muted-text cursor-not-allowed'
-                  }`}
+                  className={`flex items-center justify-center w-8 h-8 transition-all cursor-pointer ${inputValue.trim() && !isGenerating
+                    ? 'bg-primary text-on-primary hover:opacity-90'
+                    : 'bg-[#252525] text-muted-text cursor-not-allowed'
+                    }`}
                 >
                   <Send size={14} />
                 </button>
@@ -529,14 +544,14 @@ export default function EditorView({
             <Sliders size={12} />
             LORA WEIGHTS CONTROLS
           </h4>
-          
+
           <div className="space-y-5">
             <div>
               <div className="flex justify-between text-[10px] font-mono mb-2">
                 <span className="opacity-70">Temperature</span>
                 <span className="text-secondary font-bold">{temperature.toFixed(2)}</span>
               </div>
-              <input 
+              <input
                 type="range" min="0.1" max="1.0" step="0.05"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
@@ -549,7 +564,7 @@ export default function EditorView({
                 <span className="opacity-70">Top P</span>
                 <span className="text-secondary font-bold">{topP.toFixed(2)}</span>
               </div>
-              <input 
+              <input
                 type="range" min="0.1" max="1.0" step="0.05"
                 value={topP}
                 onChange={(e) => setTopP(parseFloat(e.target.value))}
@@ -562,7 +577,7 @@ export default function EditorView({
                 <span className="opacity-70">Presence Penalty</span>
                 <span className="text-secondary font-bold">{presencePenalty.toFixed(2)}</span>
               </div>
-              <input 
+              <input
                 type="range" min="-2.0" max="2.0" step="0.1"
                 value={presencePenalty}
                 onChange={(e) => setPresencePenalty(parseFloat(e.target.value))}

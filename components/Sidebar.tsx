@@ -10,9 +10,10 @@ interface SidebarProps {
   personas: Persona[];
   activePersonaId: string;
   onSelectPersona: (id: string) => void;
+  onOpenCreateModal?: () => void;
 }
 
-export default function Sidebar({ personas, activePersonaId, onSelectPersona }: SidebarProps) {
+export default function Sidebar({ personas, activePersonaId, onSelectPersona, onOpenCreateModal }: SidebarProps) {
   // Map icon strings to Lucide components
   const getIcon = (iconName: string) => {
     switch (iconName) {

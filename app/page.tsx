@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, FormEvent } from "react";
 import { Plus, X } from "lucide-react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
@@ -14,12 +14,13 @@ import ArchiveView from "@/components/ArchiveView";
 import EditorView from "@/components/EditorView";
 import ComparisonView from "@/components/ComparisonView";
 import { Persona, Manuscript } from "@/types";
+import { loadManuscripts, saveManuscript, deleteManuscript } from "@/lib/manuscripts-storage";
 
 export default function Home() {
   // Tabs: landing, editor, archive, comparison
   const [currentTab, setCurrentTab] = useState<'landing' | 'editor' | 'archive' | 'comparison'>('landing');
   const [activePersonaId, setActivePersonaId] = useState<string>('novel');
-  const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
+  const [manuscripts, setManuscripts] = useState<Manuscript[]>(() => loadManuscripts());
   const [selectedManuscript, setSelectedManuscript] = useState<Manuscript | null>(null);
 
   // Dynamic Modals
@@ -89,72 +90,92 @@ export default function Home() {
   const [newPersonaDesc, setNewPersonaDesc] = useState("");
   const [newPersonaIcon, setNewPersonaIcon] = useState("novel");
 
-  // Load manuscripts on mount
-  useEffect(() => {
-    fetchManuscripts();
-  }, []);
-
-  // 1. Fetch Manuscripts API
-  const fetchManuscripts = async () => {
+  // 원고 저장 (localStorage)
+  const handleSaveManuscript = async (manuscriptData: Partial<Manuscript>): Promise<void> => {
     try {
-      const res = await fetch("/api/manuscripts");
-      if (res.ok) {
-        const data = await res.json();
-        setManuscripts(data);
-      }
-    } catch (e) {
-      console.error("Failed to fetch manuscripts from server, utilizing fallback.", e);
-    }
-  };
-
-  // 2. Save Manuscript API (Create / Update)
-  const handleSaveManuscript = async (manuscriptData: Partial<Manuscript>) => {
-    try {
-      const res = await fetch("/api/manuscripts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(manuscriptData)
-      });
-      if (res.ok) {
-        const saved = await res.json();
-        // Update local list
-        setManuscripts(prev => {
-          const idx = prev.findIndex(m => m.id === saved.id);
-          if (idx !== -1) {
-            const copy = [...prev];
-            copy[idx] = saved;
-            return copy;
-          }
-          return [saved, ...prev];
-        });
-        setSelectedManuscript(saved);
-        // Toast style transition
-        alert(`원고 "${saved.title}" 가 안전하게 아카이브에 저장되었습니다!`);
-        setCurrentTab('archive');
-      }
+      const saved = saveManuscript(manuscriptData);
+      setManuscripts(loadManuscripts());
+      setSelectedManuscript(saved);
+      alert(`원고 "${saved.title}" 가 안전하게 아카이브에 저장되었습니다!`);
+      setCurrentTab('archive');
     } catch (e) {
       console.error("Save failed", e);
       alert("원고 저장 도중 예기치 못한 에러가 발생했습니다.");
     }
   };
 
-  // 3. Generate Manuscript using backend Gemini API Proxy
-  const handleGenerateManuscript = async (promptText: string, config: any): Promise<string> => {
+  // 3. Generate Manuscript using backend AI API (supports streaming)
+  const handleGenerateManuscript = async (
+    promptText: string,
+    config: any,
+    onChunk?: (chunk: string) => void
+  ): Promise<string> => {
     try {
+      const useStream = typeof onChunk === "function";
       const res = await fetch("/api/generate-manuscript", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
+          stream: useStream,
           ...config
         })
       });
-      if (res.ok) {
-        const data = await res.json();
-        return data.content;
-      } else {
-        throw new Error("서버 에러가 발생했습니다.");
+
+      if (!res.ok) throw new Error("서버 에러가 발생했습니다.");
+
+      // ── Streaming mode ──
+      if (useStream && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let buffer = "";
+        let streamDone = false;
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          // done일 때도 남은 바이트를 flush해서 마지막 멀티바이트 문자(한국어 등) 손실 방지
+          if (done) {
+            buffer += decoder.decode(undefined, { stream: false });
+          } else {
+            buffer += decoder.decode(value, { stream: true });
+          }
+
+          const lines = buffer.split("\n");
+          // done이면 마지막 줄도 처리, 아니면 불완전한 마지막 줄은 버퍼에 보존
+          buffer = done ? "" : (lines.pop() ?? "");
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6).trim();
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.error) throw new Error(parsed.error);
+              // 서버가 스트리밍 완료 시 품질 정제된 최종 텍스트를 done 이벤트로 전송
+              if (parsed.done && typeof parsed.finalText === "string") {
+                fullText = parsed.finalText;
+                streamDone = true;
+                break;
+              }
+              const chunk: string = parsed.chunk || "";
+              if (chunk) {
+                fullText += chunk;
+                onChunk!(chunk);
+              }
+            } catch (parseErr: any) {
+              if (parseErr.message && !parseErr.message.includes("JSON")) throw parseErr;
+            }
+          }
+
+          if (done || streamDone) break;
+        }
+        return fullText;
       }
+
+      // ── Non-streaming mode (fallback) ──
+      const data = await res.json();
+      return data.content || "";
     } catch (e: any) {
       console.error(e);
       alert(e.message || "원고 자동 생성에 실패했습니다. API 키 구성을 확인해 주세요.");
@@ -162,11 +183,18 @@ export default function Home() {
     }
   };
 
-  // 5. Select manuscript to edit
+  // 원고 선택
   const handleSelectManuscript = (m: Manuscript) => {
     setSelectedManuscript(m);
     setActivePersonaId(m.personaId);
     setCurrentTab('editor');
+  };
+
+  // 원고 삭제
+  const handleDeleteManuscript = (id: string) => {
+    deleteManuscript(id);
+    setManuscripts(loadManuscripts());
+    if (selectedManuscript?.id === id) setSelectedManuscript(null);
   };
 
   // 6. Action for New Blank Draft
@@ -234,6 +262,7 @@ export default function Home() {
             manuscripts={manuscripts}
             personas={personas}
             onSelectManuscript={handleSelectManuscript}
+            onDelete={handleDeleteManuscript}
           />
         ) : currentTab === 'editor' ? (
           <EditorView 

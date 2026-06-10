@@ -4,16 +4,17 @@
  */
 
 import { useState } from "react";
-import { Search, Filter, BookOpen, Film, Gamepad2, Megaphone, ArrowUpRight } from "lucide-react";
+import { Search, Filter, BookOpen, Film, Gamepad2, Megaphone, ArrowUpRight, Trash2 } from "lucide-react";
 import { Manuscript, ManuscriptStatus, Persona } from "@/types";
 
 interface ArchiveViewProps {
   manuscripts: Manuscript[];
   personas: Persona[];
   onSelectManuscript: (manuscript: Manuscript) => void;
+  onDelete?: (id: string) => void;
 }
 
-export default function ArchiveView({ manuscripts, personas, onSelectManuscript }: ArchiveViewProps) {
+export default function ArchiveView({ manuscripts, personas, onSelectManuscript, onDelete }: ArchiveViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<"all" | "novel" | "script" | "other">("all");
 
@@ -147,10 +148,23 @@ export default function ArchiveView({ manuscripts, personas, onSelectManuscript 
               <div 
                 key={m.id}
                 onClick={() => onSelectManuscript(m)}
-                className={`bg-surface-warm border border-border-warm p-6 flex flex-col justify-between group hover:border-primary transition-all duration-200 cursor-pointer min-h-[220px] rounded-none ${
+                className={`bg-surface-warm border border-border-warm p-6 flex flex-col justify-between group hover:border-primary transition-all duration-200 cursor-pointer min-h-[220px] rounded-none relative ${
                   isFirst ? "lg:col-span-2 shadow-xl" : ""
                 }`}
               >
+                {/* 삭제 버튼 */}
+                {onDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`"${m.title}" 을(를) 삭제하시겠습니까?`)) onDelete(m.id);
+                    }}
+                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-text hover:text-red-400 bg-transparent cursor-pointer"
+                    title="삭제"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-2 text-muted-text text-[10px] font-mono tracking-wider uppercase">
                     <span className={`w-1.5 h-1.5 ${status.bg}`}></span>
