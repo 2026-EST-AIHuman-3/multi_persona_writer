@@ -7,3 +7,21 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Python
+__pycache__/
+*.pyc
+
+# AI model / adapter weights
+adapters/
+checkpoints/
+models/
+*.safetensors
+*.bin
+*.gguf
+*.pt
+*.pth
+
+# ML cache / logs
+.cache/
+wandb/
