@@ -1,3 +1,6 @@
+# Qwen3-8B를 bf16으로 로드하고 LoRA adapter만 학습하는 코드
+# 최종 채택 실험에 사용
+
 import torch
 from datasets import load_dataset
 from transformers import (
