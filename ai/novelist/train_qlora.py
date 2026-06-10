@@ -1,3 +1,5 @@
+# Qwen3-8B를 4bit NF4로 양자화하여 QLoRA 방식으로 학습하는 코드
+
 import torch
 from datasets import load_dataset
 from transformers import (
