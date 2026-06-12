@@ -34,7 +34,7 @@ export default function Home() {
       loraAdapter: "LoRA: LITERARY_DARK",
       icon: "novel",
       description: "고전적 서사, 소설적이고 사색적인 풍성한 문장 묘사, 매혹적인 캐릭터 서술에 최적화된 문학 페르소나입니다.",
-      recommendedTasks: ["장편 소설 한 대목", "단편 전개", "심리 묘사 아웃풋"],
+      recommendedTasks: ["눈 사람을 소재로 따뜻하고 잔잔한 분위기의 장면을 써줘", "단편 전개", "심리 묘사 아웃풋"],
       defaultConfig: { temperature: 0.8, topP: 0.95, presencePenalty: 0.5 }
     },
     {
@@ -43,7 +43,7 @@ export default function Home() {
       loraAdapter: "LoRA: Noir_v3",
       icon: "movie",
       description: "대사와 지문, 명확한 신 구성([SCENE START]), 긴장감 넘치는 장르적 어조에 최적화된 시나리오 작가 페르소나입니다.",
-      recommendedTasks: ["독백(V.O.) 씬", "신(Scene) 분할 지문", "등장인물 간의 고밀도 갈등 대사"],
+      recommendedTasks: ["무협 영화 인트로 초안 작성해줘", "신(Scene) 분할 지문", "등장인물 간의 고밀도 갈등 대사"],
       defaultConfig: { temperature: 0.7, topP: 0.9, presencePenalty: 0.4 }
     },
     {
@@ -52,25 +52,7 @@ export default function Home() {
       loraAdapter: "LoRA: Qwen3_Game_500_Final",
       icon: "game",
       description: "퀘스트 대화 트리, 분기 스크립트, 게임 세계관 NPC 및 상호작용 문답 구조에 최적화된 게이밍 라이터 페르소나입니다.",
-      recommendedTasks: ["NPC 선택지 대사", "퀘스트 설명 스크립트", "게임 시스템 로그 풍 기사"],
-      defaultConfig: { temperature: 0.5, topP: 0.8, presencePenalty: 0.65 }
-    },
-    {
-      id: "game-50",
-      name: "게임 시나리오 50",
-      loraAdapter: "LoRA: Qwen3_Game_Checkpoint_50",
-      icon: "game",
-      description: "50 스텝 체크포인트 LoRA를 테스트하기 위한 게임 시나리오 페르소나입니다.",
-      recommendedTasks: ["50 체크포인트 응답 비교", "게임 시나리오 진행 테스트", "한국어 안정성 확인"],
-      defaultConfig: { temperature: 0.5, topP: 0.8, presencePenalty: 0.65 }
-    },
-    {
-      id: "game-500",
-      name: "게임 시나리오 500",
-      loraAdapter: "LoRA: Qwen3_Game_500_Final",
-      icon: "game",
-      description: "500개 데이터 기반 최종 LoRA를 테스트하기 위한 게임 시나리오 페르소나입니다.",
-      recommendedTasks: ["최종 LoRA 응답 비교", "게임 시나리오 진행 테스트", "반복/깨짐 확인"],
+      recommendedTasks: ["게임시나리오 제작 시작하자"],
       defaultConfig: { temperature: 0.5, topP: 0.8, presencePenalty: 0.65 }
     },
     {
@@ -79,7 +61,7 @@ export default function Home() {
       loraAdapter: "LoRA: Luxury_Brand_Voice",
       icon: "ad",
       description: "소리 없이 시선을 사로잡는 세련됨, 브랜드 고유의 프리미엄 에디토리얼 어조 및 감각적 슬로건 기구에 어울리는 광고 페르소나입니다.",
-      recommendedTasks: ["인스타그램 광고 문구", "브랜드 마케팅 슬로건", "감성 제품 에세이"],
+      recommendedTasks: ["바닐라 콜드브루 15초 광고 만들어줘. 타깃은 20대 직장인이야.", "브랜드 마케팅 슬로건", "감성 제품 에세이"],
       defaultConfig: { temperature: 0.85, topP: 0.95, presencePenalty: 0.6 }
     }
   ]);

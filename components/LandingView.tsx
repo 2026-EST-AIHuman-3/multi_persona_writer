@@ -23,8 +23,12 @@ export default function LandingView({ onStartWriting }: LandingViewProps) {
         <span className="text-[10px] font-mono tracking-[0.4em] text-secondary uppercase font-semibold">
           AI-Powered Persona Studio
         </span>
-        <h1 className="font-serif text-5xl md:text-6xl text-ink max-w-[650px] leading-[1.15] font-normal italic break-keep">
-          비어 있는 빈칸을 <br />영감으로 채우는,<br />Your <span className="font-serif italic font-semibold border-b border-secondary pb-1">AI Partner</span>
+        <h1 className="font-serif text-4xl md:text-5xl text-ink max-w-[650px] leading-[1.3] font-normal italic break-keep">
+          크리에이터를 위해,<br />
+          아이디어 기획부터<br />
+          초안 생성까지 지원하는<br />
+          창작 콘텐츠 제작 도우미<br />
+          <span className="font-serif italic font-semibold border-b border-secondary pb-1">AI 서비스</span>
         </h1>
         <p className="font-sans text-body-md text-on-surface-variant max-w-[500px] font-light break-keep leading-relaxed tracking-wide opacity-90">
           전문적인 시나리오 작가 페르소나와 정교한 LoRA 어댑터 기술이 만난 전용 에디토리얼 스튜디오 환경입니다. 창작의 맥락을 완벽히 보존하면서 다양한 작가 페르소나를 자유롭게 오가며 영감을 채우세요.

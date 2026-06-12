@@ -21,7 +21,7 @@ export default function ArchiveView({ manuscripts, personas, onSelectManuscript,
   const getPersonaBadge = (personaId: string) => {
     const p = personas.find(x => x.id === personaId);
     if (!p) return { name: "알 수 없음", icon: <BookOpen size={12} /> };
-    
+
     let icon = <BookOpen size={12} />;
     if (p.icon === 'game') icon = <Gamepad2 size={12} />;
     else if (p.icon === 'movie') icon = <Film size={12} />;
@@ -46,7 +46,7 @@ export default function ArchiveView({ manuscripts, personas, onSelectManuscript,
   // Filtering manuscripts
   const filteredManuscripts = manuscripts.filter((m) => {
     // Search filter
-    const matchesSearch = 
+    const matchesSearch =
       m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.prompt.toLowerCase().includes(searchTerm.toLowerCase());
@@ -71,58 +71,54 @@ export default function ArchiveView({ manuscripts, personas, onSelectManuscript,
           <h1 className="font-serif italic text-3xl text-ink mt-1 font-semibold">원고 아카이브</h1>
         </div>
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-border-warm pb-6">
-          
+
           {/* Search Bar */}
           <div className="relative w-full md:w-96 flex items-center">
             <Search className="absolute left-3.5 text-muted-text" size={14} />
-            <input 
+            <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#121212] border border-border-warm focus:outline-none focus:border-secondary pl-11 pr-4 py-2.5 placeholder-muted-text text-xs rounded-none font-sans" 
-              placeholder="원고 검색..." 
+              className="w-full bg-[#121212] border border-border-warm focus:outline-none focus:border-secondary pl-11 pr-4 py-2.5 placeholder-muted-text text-xs rounded-none font-sans"
+              placeholder="원고 검색..."
               type="text"
             />
           </div>
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <button 
+            <button
               onClick={() => setActiveCategory("all")}
-              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors rounded-none ${
-                activeCategory === "all"
+              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors rounded-none ${activeCategory === "all"
                   ? "border-primary bg-primary text-on-primary"
                   : "border-border-warm text-on-surface-variant hover:border-primary hover:text-primary bg-transparent"
-              }`}
+                }`}
             >
               모든 프로젝트
             </button>
-            <button 
+            <button
               onClick={() => setActiveCategory("novel")}
-              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors rounded-none ${
-                activeCategory === "novel"
+              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors rounded-none ${activeCategory === "novel"
                   ? "border-primary bg-primary text-on-primary"
                   : "border-border-warm text-on-surface-variant hover:border-primary hover:text-primary bg-transparent"
-              }`}
+                }`}
             >
               소설
             </button>
-            <button 
+            <button
               onClick={() => setActiveCategory("script")}
-              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors rounded-none ${
-                activeCategory === "script"
+              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors rounded-none ${activeCategory === "script"
                   ? "border-primary bg-primary text-on-primary"
                   : "border-border-warm text-on-surface-variant hover:border-primary hover:text-primary bg-transparent"
-              }`}
+                }`}
             >
-              시나리오
+              영화
             </button>
-            <button 
+            <button
               onClick={() => setActiveCategory("other")}
-              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors inline-flex items-center gap-1.5 rounded-none ${
-                activeCategory === "other"
+              className={`px-4 py-2.5 border text-[9px] font-bold tracking-widest uppercase cursor-pointer transition-colors inline-flex items-center gap-1.5 rounded-none ${activeCategory === "other"
                   ? "border-primary bg-primary text-on-primary"
                   : "border-border-warm text-on-surface-variant hover:border-primary hover:text-primary bg-transparent"
-              }`}
+                }`}
             >
               <Filter size={10} />
               광고/기타
@@ -145,12 +141,11 @@ export default function ArchiveView({ manuscripts, personas, onSelectManuscript,
             const status = getStatusColor(m.status);
 
             return (
-              <div 
+              <div
                 key={m.id}
                 onClick={() => onSelectManuscript(m)}
-                className={`bg-surface-warm border border-border-warm p-6 flex flex-col justify-between group hover:border-primary transition-all duration-200 cursor-pointer min-h-[220px] rounded-none relative ${
-                  isFirst ? "lg:col-span-2 shadow-xl" : ""
-                }`}
+                className={`bg-surface-warm border border-border-warm p-6 flex flex-col justify-between group hover:border-primary transition-all duration-200 cursor-pointer min-h-[220px] rounded-none relative ${isFirst ? "lg:col-span-2 shadow-xl" : ""
+                  }`}
               >
                 {/* 삭제 버튼 */}
                 {onDelete && (
@@ -176,9 +171,8 @@ export default function ArchiveView({ manuscripts, personas, onSelectManuscript,
                 </div>
 
                 <div className="flex-grow">
-                  <h3 className={`text-on-surface font-serif italic group-hover:text-primary transition-colors ${
-                    isFirst ? "text-2xl font-normal" : "text-base font-semibold"
-                  }`}>
+                  <h3 className={`text-on-surface font-serif italic group-hover:text-primary transition-colors ${isFirst ? "text-2xl font-normal" : "text-base font-semibold"
+                    }`}>
                     {m.title}
                   </h3>
                   <p className="text-on-surface-variant text-xs line-clamp-2 mb-6 font-sans leading-relaxed mt-1 opacity-80">

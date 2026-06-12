@@ -1,9 +1,12 @@
+"use client";
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { BookOpen, HelpCircle, Settings, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   currentTab: 'landing' | 'editor' | 'archive' | 'comparison';
@@ -12,6 +15,14 @@ interface HeaderProps {
 }
 
 export default function Header({ currentTab, onChangeTab, onNewDraft }: HeaderProps) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    if (confirm("로그아웃 하시겠습니까?")) {
+      document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      router.push("/login");
+    }
+  };
   return (
     <header className="bg-bg-warm border-b border-border-warm flex justify-between items-center px-margin-page h-16 w-full fixed top-0 z-50">
       <div className="flex items-center gap-10">
@@ -54,7 +65,11 @@ export default function Header({ currentTab, onChangeTab, onNewDraft }: HeaderPr
           새 원고 작성
         </button>
         <div className="flex items-center gap-3 text-on-surface-variant border-l border-border-warm pl-4">
-          <button className="hover:text-primary transition-colors p-1.5 hover:bg-surface-warm rounded">
+          <button 
+            onClick={handleLogout}
+            className="hover:text-primary transition-colors p-1.5 hover:bg-surface-warm rounded"
+            title="로그아웃"
+          >
             <User size={15} />
           </button>
           <button className="hover:text-primary transition-colors p-1.5 hover:bg-surface-warm rounded">

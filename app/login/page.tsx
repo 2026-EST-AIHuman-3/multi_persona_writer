@@ -24,6 +24,10 @@ export default function LoginPage() {
     // Simulate login delay
     await new Promise((resolve) => setTimeout(resolve, 1200));
     setIsLoading(false);
+    
+    // 로그인 쿠키 설정 (1일 유지)
+    document.cookie = "isLoggedIn=true; path=/; max-age=86400";
+    
     router.push("/");
   };
 

@@ -147,8 +147,6 @@ Persona-Writer-Studio/
 | `novel` | 소설가 | `LoRA: LITERARY_DARK` | 감정·분위기 중심, [소설 장면] + [작가 코멘트] 형식 출력 |
 | `movie` | 영화 시나리오 | `LoRA: Noir_v3` | 대사·지문, 신(Scene) 구성 최적화 |
 | `game` | 게임 시나리오 | `LoRA: Qwen3_Game_500_Final` | 단계별 인터랙티브 분기 플로우 |
-| `game-50` | 게임 시나리오 50 | `LoRA: Qwen3_Game_Checkpoint_50` | 50 스텝 체크포인트 비교용 |
-| `game-500` | 게임 시나리오 500 | `LoRA: Qwen3_Game_500_Final` | 500 스텝 최종 LoRA 비교용 |
 | `ad` | 광고 카피 | `LoRA: Luxury_Brand_Voice` | 프리미엄 브랜드 에디토리얼 어조 |
 
 ---

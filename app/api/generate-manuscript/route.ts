@@ -201,9 +201,11 @@ async function streamFromLlamaCpp(
 
   const isNovelist = args.personaName === "소설가";
   const isMovieWriter = args.personaName === "영화 시나리오";
+  const isAdWriter = args.personaName === "광고 카피";
   const system = args.systemPrompt
     || (isNovelist ? buildNovellistSystemPrompt()
     : isMovieWriter ? buildMovieSystemPrompt()
+    : isAdWriter ? buildAdSystemPrompt()
     : buildDefaultSystemPrompt(args.personaName, args.personaDesc, args.loraAdapter));
 
   const response = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -251,15 +253,14 @@ async function streamFromVllm(
 ) {
   const baseUrl = process.env.VLLM_BASE_URL || "http://127.0.0.1:8000";
   const model = resolveVllmModel(args.personaName, args.loraAdapter);
-  const system =
-    args.systemPrompt ||
-    `당신은 노련한 전문 창작 작가이자 페르소나 "${args.personaName}"입니다.
-페르소나 설명: ${args.personaDesc}
-선택된 스타일 어댑터(LoRA): ${args.loraAdapter}
-모든 답변은 자연스러운 한국어로 작성하고, 같은 문장을 반복하지 마십시오.
-출력 결과에는 사용자에게 보여줄 본문만 표시하십시오.
-<think>, </think>, reasoning, 분석 과정은 절대 출력하지 마십시오.
-/no_think`;
+  const isNovelist = args.personaName === "소설가";
+  const isMovieWriter = args.personaName === "영화 시나리오";
+  const isAdWriter = args.personaName === "광고 카피";
+  const system = args.systemPrompt
+    || (isNovelist ? buildNovellistSystemPrompt()
+    : isMovieWriter ? buildMovieSystemPrompt()
+    : isAdWriter ? buildAdSystemPrompt()
+    : buildDefaultSystemPrompt(args.personaName, args.personaDesc, args.loraAdapter));
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (process.env.VLLM_API_KEY) {
@@ -493,9 +494,11 @@ async function generateWithLlamaCpp({
 
   const isNovelist = personaName === "소설가";
   const isMovieWriter = personaName === "영화 시나리오";
+  const isAdWriter = personaName === "광고 카피";
   const system = systemPrompt
     || (isNovelist ? buildNovellistSystemPrompt()
     : isMovieWriter ? buildMovieSystemPrompt()
+    : isAdWriter ? buildAdSystemPrompt()
     : buildDefaultSystemPrompt(personaName, personaDesc, loraAdapter));
 
   const response = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -683,15 +686,14 @@ async function generateWithVllm({
 }) {
   const baseUrl = process.env.VLLM_BASE_URL || "http://127.0.0.1:8000";
   const model = resolveVllmModel(personaName, loraAdapter);
-  const system =
-    systemPrompt ||
-    `당신은 노련한 전문 창작 작가이자 페르소나 "${personaName}"입니다.
-페르소나 설명: ${personaDesc}
-선택된 스타일 어댑터(LoRA): ${loraAdapter}
-모든 답변은 자연스러운 한국어로 작성하고, 같은 문장을 반복하지 마십시오.
-출력 결과에는 사용자에게 보여줄 본문만 표시하십시오.
-<think>, </think>, reasoning, 분석 과정은 절대 출력하지 마십시오.
-/no_think`;
+  const isNovelist = personaName === "소설가";
+  const isMovieWriter = personaName === "영화 시나리오";
+  const isAdWriter = personaName === "광고 카피";
+  const system = systemPrompt
+    || (isNovelist ? buildNovellistSystemPrompt()
+    : isMovieWriter ? buildMovieSystemPrompt()
+    : isAdWriter ? buildAdSystemPrompt()
+    : buildDefaultSystemPrompt(personaName, personaDesc, loraAdapter));
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (process.env.VLLM_API_KEY) {
@@ -895,6 +897,25 @@ function buildMovieSystemPrompt(): string {
 
 <think>, </think>, reasoning, 분석 과정은 절대 출력하지 마.
 /no_think`;
+}
+
+function buildAdSystemPrompt(): string {
+  return `광고 제작을 돕는 전략형 AI 광고 작가 '브랜디'입니다.
+친근하지만 전문적이고 전략적인 광고회사 선배처럼 답변합니다.
+한국어로만 답변합니다.
+마크다운 굵게 표시( )를 사용하지 않습니다.
+내부 생각 과정이나 추론 과정을 출력하지 않습니다.
+답변만 출력합니다.
+
+광고 제작 요청에는 아래 6개 섹션을 모두 포함해 답변합니다.
+[광고 방향]
+[핵심 메시지]
+[광고 대본]
+[씬별 구성/스토리보드]
+[CTA]
+[톤앤매너]
+
+이후에 "대본만 수정", "CTA만 바꿔줘", "더 짧게", "톤앤매너 바꿔줘"처럼 추가 질문을 하면, 답변을 참고해서 요청한 부분만 자연스럽게 수정합니다.`;
 }
 
 function buildDefaultSystemPrompt(personaName?: string, personaDesc?: string, loraAdapter?: string): string {

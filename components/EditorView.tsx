@@ -59,6 +59,7 @@ export default function EditorView({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   // 스트리밍 중 점진적으로 쌓이는 텍스트
   const [streamingContent, setStreamingContent] = useState<string>("");
+  const [useStreaming, setUseStreaming] = useState(true);
   const [scenarioState, setScenarioState] = useState<ScenarioState>(() => loadScenarioState());
 
   // Derive current messages from sessionsMap
@@ -216,9 +217,11 @@ export default function EditorView({
           presencePenalty,
           systemPrompt,
         },
-        (chunk: string) => {
-          setStreamingContent(prev => prev + chunk);
-        }
+        useStreaming
+          ? (chunk: string) => {
+              setStreamingContent(prev => prev + chunk);
+            }
+          : undefined
       );
       const generated = isScenarioPersona
         ? normalizeScenarioControlChoices(rawGenerated, scenarioState)
@@ -585,6 +588,31 @@ export default function EditorView({
               />
             </div>
           </div>
+        </div>
+
+        {/* Generation Mode Switch */}
+        <div className="p-6 border-b border-border-warm/40">
+          <h4 className="font-mono text-[9px] tracking-[0.3em] text-on-surface-variant mb-5 uppercase flex items-center gap-2 font-bold">
+            <Bot size={12} />
+            GENERATION OPTIONS
+          </h4>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono opacity-70">Stream Response</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useStreaming}
+                onChange={(e) => setUseStreaming(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-[#252525] border border-border-warm/60 rounded-full peer peer-checked:after:translate-x-[16px] after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-muted-text after:border-none after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary/20 peer-checked:after:bg-primary"></div>
+            </label>
+          </div>
+          <p className="text-[9px] text-muted-text font-mono mt-3 leading-relaxed">
+            {useStreaming
+              ? "실시간으로 생성 중인 원고를 출력합니다."
+              : "완성 시점까지 대기 후 한 번에 깨끗한 원고를 출력합니다 (품질 복구 자동 적용)."}
+          </p>
         </div>
 
         {/* Session Stats */}

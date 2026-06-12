@@ -1,4 +1,5 @@
 import { ScenarioState } from "./types";
+import { buildScenarioBranchGraph } from "./branch-graph";
 
 const KOREAN_RULES = `
 [한국어 출력 규칙]
@@ -89,17 +90,30 @@ function buildStageInstruction(state: ScenarioState): string {
 분기 그래프 검수다.
 반응 분기/단기 분기/핵심 분기 구분, merge 여부, effects 활용, 원고량 폭발 가능성, 챕터 플롯 충돌을 점검한다.
 마지막에 [검수 후 선택]은 "1번: 현재 분기 그래프 확정 후 다음 단계", "2번: 제안된 수정안 전체 반영 후 다시 작성", "3번: 직접 수정 요청 입력"만 제시한다.`;
-    case "SCENE_EXPANSION":
+    case "SCENE_EXPANSION": {
+      const graph = buildScenarioBranchGraph(state);
+      const currentNode = graph.nodes.find((n) => n.node_id === state.currentNodeId);
+      const isChoiceNode = currentNode?.type === "choice";
+      const choicesText = isChoiceNode && currentNode.choices
+        ? currentNode.choices.map((c, i) => `${i + 1}번. ${c.text}`).join("\n")
+        : "";
+
       return `
 [이번 단계]
 3차 장면 원고 작성이다.
 현재 노드 ${state.currentNodeId} 하나만 작성한다.
-반드시 [대사 원고]와 [다음 연결]만 출력한다.
+${isChoiceNode
+          ? `이 노드는 선택 분기(Choice) 노드입니다. 플레이어가 다음 두 가지 행동 분기 중 하나를 선택해야 하는 갈등/상황을 대사 원고 내에 자연스럽게 묘사하고, 장면 원고의 마지막 부분에 반드시 [선택지 분기] 헤더를 붙여 아래의 선택 항목을 제시하십시오:
+[선택지 분기]
+${choicesText}`
+          : `반드시 [대사 원고]와 [다음 연결]만 출력한다.`
+        }
 장면 설명 요약이 아니라 실제 초안 원고를 쓴다.
 같은 문장을 반복하지 않는다.
 화자명은 주인공, 동료, 시스템, 경비병, 안내자처럼 짧게 쓴다.
 확정 설정 문장이나 선택지 문장을 대사/화자명으로 그대로 반복하지 않는다.
-영어 구절, 일본어, 중국어, 한자, 의미 없는 로마자 토큰을 출력하지 않는다.`;
+일본어, 중국어, 한자, 의미 없는 로마자 토큰을 출력하지 않는다.`;
+    }
     case "FINAL_SAVE":
       return `
 [이번 단계]

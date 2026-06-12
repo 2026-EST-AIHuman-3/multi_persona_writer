@@ -29,8 +29,6 @@ export function stripForeignGlyphs(text: string): string {
     .replace(/[ぁ-ゟ゠-ヿ]+/g, "")
     .replace(/[一-龯]+/g, "")
     .replace(/[Đđ]+/g, "")
-    .replace(/[A-Za-z]{3,}(?:\s+[A-Za-z]{2,}){2,}/g, "")
-    .replace(/\b(?!UI\b|NPC\b|RPG\b|JSON\b|PDF\b|LoRA\b|Qwen\b|GGUF\b|ID\b|API\b)[A-Za-z]{2,}\b/g, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+([.,!?;:)\]}])/g, "$1")
     .replace(/([([{])\s+/g, "$1")
